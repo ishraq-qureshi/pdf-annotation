@@ -1,4 +1,4 @@
-const pdfUrl = 'http://127.0.0.1:5500/assets/pdfs/sample.pdf';
+const pdfUrl = 'https://ishraq-qureshi.github.io/pdf-annotation/assets/pdfs/sample.pdf';
 const canvasContainer = document.getElementById("pdfCanvas");
 let pdfDoc = null;
 let annotationType;

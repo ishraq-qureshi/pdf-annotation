@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Annotation</title>
+  <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body>
+  <!-- HTML Structure -->
+<div>
+  <div id="pdfTools">
+    <button onclick="setAnnotationType('highlight')">Highlight Text</button>
+    <button onclick="setAnnotationType('measure')">Measure</button>
+    <button onclick="setAnnotationType('text')">Add Text</button>
+    <button onclick="downloadPDF()">Download PDF</button>
+    <button onclick="downloadPDF()">Erase</button>
+  </div>
+  <div id="pdfCanvas"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js';</script>
+<script src="assets/js/custom.js"></script>
+
+</body>
+</html>

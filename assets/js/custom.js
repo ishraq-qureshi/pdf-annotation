@@ -52,21 +52,31 @@ const renderPDF = async (url, canvasContainer) => {
   annotationCanvas.setAttribute("id", "pdfAnnotations");
   canvasContainer.append(annotationCanvas);
 
+  canvasContainer.style.maxWidth = `${annotationCanvasWidth}px`
+
 };
 
 const setAnnotationType = (type) => {
   annotationType = type;  
-  annotationCanvas.removeEventListener('mousedown', handleMouseDown);
-  annotationCanvas.removeEventListener('mousemove', handleMouseMove);
-  annotationCanvas.removeEventListener('mouseup', handleMouseUp);
+  annotationCanvas.removeEventListener('mousedown', handleMeasureStart);
+  annotationCanvas.removeEventListener('mousemove', handleMeasureMove);
+  annotationCanvas.removeEventListener('mouseup', handleMeasureEnd);
   annotationCanvas.removeEventListener('mouseup', handleTextHighlight);
+  annotationCanvas.removeEventListener('click', handleErase);    
+  annotationCanvas.removeEventListener('mousedown', handleHighLightStart);
+  annotationCanvas.removeEventListener('mousemove', handleHighLightMove);
+  annotationCanvas.removeEventListener('mouseup', handleHighLightEnd);
 
   if (annotationType === 'highlight') {    
-    annotationCanvas.addEventListener('mouseup', handleTextHighlight);
+    annotationCanvas.addEventListener('mousedown', handleHighLightStart);
+    annotationCanvas.addEventListener('mousemove', handleHighLightMove);
+    annotationCanvas.addEventListener('mouseup', handleHighLightEnd);
   } else if (annotationType === 'measure') {    
-    annotationCanvas.addEventListener('mousedown', handleMouseDown);
-    annotationCanvas.addEventListener('mousemove', handleMouseMove);
-    annotationCanvas.addEventListener('mouseup', handleMouseUp);
+    annotationCanvas.addEventListener('mousedown', handleMeasureStart);
+    annotationCanvas.addEventListener('mousemove', handleMeasureMove);
+    annotationCanvas.addEventListener('mouseup', handleMeasureEnd);
+  } else if (annotationType === 'erase') {    
+    annotationCanvas.addEventListener('click', handleErase);    
   }
 
 };
@@ -76,7 +86,7 @@ const handleTextHighlight = (event) => {
   // You may refer to previous examples for this function
 };
 
-const handleMouseDown = (event) => {
+const handleMeasureStart = (event) => {
   if (event.target.tagName !== 'CANVAS') return;
   isDrawing = true;  
   const rect = event.target.getBoundingClientRect();
@@ -86,13 +96,15 @@ const handleMouseDown = (event) => {
   annotationContext.moveTo(startX, startY);
 };
 
-const handleMouseMove = async (event) => {
+const handleMeasureMove = async (event) => {
   if (!isDrawing) return;
   if (event.target.tagName !== 'CANVAS') return;
   const rect = event.target.getBoundingClientRect();
   endX = (event.clientX - rect.left) * (event.target.width / rect.width);
   endY = (event.clientY - rect.top) * (event.target.height / rect.height);
-  drawMeasureAnnotations();
+  annotationContext.lineWidth = 1
+  annotationContext.strokeStyle = "black";
+  drawAnnotations();
   annotationContext.beginPath();
   annotationContext.moveTo(startX, startY);
   annotationContext.lineTo(endX, endY);
@@ -108,16 +120,16 @@ const handleMouseMove = async (event) => {
   annotationContext.fillText(measurement, startX, startY - 10);
 };
 
-const handleMouseUp = (event) => {
+const handleMeasureEnd = (event) => {
   if (event.target.tagName !== 'CANVAS') return;
   isDrawing = false;  
   annotations.measure.push({ startX, startY, endX, endY })
 
-  drawMeasureAnnotations();  
+  drawAnnotations();  
 };
 
 const drawMeasureAnnotations = () => {
-  annotationContext.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+  
 
   annotationContext.strokeStyle = 'black';
   annotationContext.lineWidth = 1;
@@ -143,5 +155,81 @@ const downloadPDF = () => {
   // Logic to download the annotated PDF
   // This will involve converting the canvas to a PDF or saving the annotations in some way
 };
+
+const handleErase = (event) => {
+  const rect = annotationCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  annotations.measure = annotations.measure.filter((item) => {    
+    if(((x >= item.startX && x <= item.endX) || (x >= item.endX && x <= item.startX)) && ((y >= item.startY && y <= item.endY) || (y >= item.endY && y <= item.startY))) {
+      return false;      
+    }
+    return true;
+  })
+
+  annotations.highlights = annotations.highlights.filter((item) => {    
+    if(((x >= item.startX && x <= item.endX) || (x >= item.endX && x <= item.startX)) && ((y >= item.startY && y <= item.endY) || (y >= item.endY && y <= item.startY))) {
+      return false;      
+    }
+    return true;
+  })
+  drawAnnotations();
+}
+
+const handleHighLightStart = (event) => {
+  if (event.target.tagName !== 'CANVAS') return;
+  isDrawing = true;  
+  const rect = event.target.getBoundingClientRect();
+  startX = (event.clientX - rect.left) * (event.target.width / rect.width);
+  startY = (event.clientY - rect.top) * (event.target.height / rect.height);  
+  annotationContext.beginPath();
+  annotationContext.moveTo(startX, startY);
+};
+
+const handleHighLightMove = async (event) => {
+  if (!isDrawing) return;
+  if (event.target.tagName !== 'CANVAS') return;
+  const rect = event.target.getBoundingClientRect();
+  endX = (event.clientX - rect.left) * (event.target.width / rect.width);
+  endY = (event.clientY - rect.top) * (event.target.height / rect.height);
+  drawAnnotations();
+  annotationContext.lineWidth = 15
+  annotationContext.strokeStyle = "rgb(255 0 0 / 30%)";
+  annotationContext.beginPath();
+  annotationContext.moveTo(startX, startY);
+  annotationContext.lineTo(endX, endY);
+  annotationContext.stroke();
+};
+
+const handleHighLightEnd = (event) => {
+  if (event.target.tagName !== 'CANVAS') return;
+  isDrawing = false;  
+  annotations.highlights.push({ startX, startY, endX, endY })
+
+  drawAnnotations();  
+};
+
+const drawHighLightAnnotations = () => {
+
+  annotationContext.strokeStyle = 'rgb(255 0 0 / 30%)';
+  annotationContext.lineWidth = 15;
+
+  for (const annotation of annotations.highlights) {
+    annotationContext.beginPath();
+    annotationContext.moveTo(annotation.startX, annotation.startY);
+    annotationContext.lineTo(annotation.endX, annotation.endY);
+    annotationContext.stroke();
+  }
+}
+
+const drawAnnotations = () => {
+
+  annotationContext.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+
+  drawMeasureAnnotations();
+  drawHighLightAnnotations();
+}
+
 
 renderPDF(pdfUrl, canvasContainer);

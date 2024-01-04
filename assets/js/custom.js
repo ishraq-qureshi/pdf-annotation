@@ -43,6 +43,8 @@ const renderPDF = async (url, canvasContainer) => {
       viewport: viewport
     };
     await page.render(renderContext);	  
+
+    console.log(page);
   }
 
   annotationCanvas = document.createElement('canvas');
@@ -92,6 +94,8 @@ const handleMeasureStart = (event) => {
   const rect = event.target.getBoundingClientRect();
   startX = (event.clientX - rect.left) * (event.target.width / rect.width);
   startY = (event.clientY - rect.top) * (event.target.height / rect.height);
+  endX = startX + 1;
+  endY = startY + 1;
   annotationContext.beginPath();
   annotationContext.moveTo(startX, startY);
 };
@@ -183,6 +187,8 @@ const handleHighLightStart = (event) => {
   const rect = event.target.getBoundingClientRect();
   startX = (event.clientX - rect.left) * (event.target.width / rect.width);
   startY = (event.clientY - rect.top) * (event.target.height / rect.height);  
+  endX = startX + 1;
+  endY = startY + 1;
   annotationContext.beginPath();
   annotationContext.moveTo(startX, startY);
 };
